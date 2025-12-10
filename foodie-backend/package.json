@@ -1,0 +1,51 @@
+{
+  "name": "foodie-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Foodie app",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "create-admin": "node scripts/createAdminUser.js",
+    "check-recipes": "node scripts/check-recent-recipes.js",
+    "check-pending": "node scripts/check-pending-recipes.js"
+  },
+  "keywords": [
+    "food",
+    "recipes",
+    "api",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "animate.css": "^4.1.1",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "expo-auth-session": "^7.0.9",
+    "expo-crypto": "^15.0.7",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.1",
+    "helmet": "^7.1.0",
+    "hover.css": "^2.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.1",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.10",
+    "react-native-svg": "^15.15.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
