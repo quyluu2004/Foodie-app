@@ -1,0 +1,171 @@
+[
+  {
+    "title": "Phở Bò",
+    "description": "Phở bò là món ăn truyền thống của Việt Nam, nổi tiếng với nước dùng trong, ngọt thanh và thịt bò mềm. Đây là món ăn sáng phổ biến và được yêu thích trên toàn thế giới.",
+    "ingredients": [
+      "500g thịt bò thăn",
+      "200g bánh phở tươi",
+      "1 củ hành tây",
+      "2 nhánh gừng",
+      "3 lít nước dùng xương bò",
+      "Hành lá, rau mùi",
+      "Gia vị: muối, đường, nước mắm"
+    ],
+    "steps": [
+      "Chuẩn bị nước dùng: Đun sôi nước dùng xương bò, thêm hành tây và gừng nướng vào",
+      "Thái thịt bò thành lát mỏng, ướp với chút muối và tiêu",
+      "Luộc bánh phở trong nước sôi khoảng 1-2 phút, vớt ra để ráo",
+      "Xếp bánh phở vào tô, đặt thịt bò lên trên, chan nước dùng nóng",
+      "Trang trí với hành lá, rau mùi và thưởng thức nóng"
+    ],
+    "categoryName": "Món Chính",
+    "imageUrl": "https://images.unsplash.com/photo-1680084581642-17cf51ad7760?ixid=M3w4MzkyODV8MHwxfHNlYXJjaHwxfHxQaCVFMSVCQiU5RiUyMEIlQzMlQjIlMjB2aWV0bmFtZXNlJTIwZm9vZHxlbnwwfDB8fHwxNzY1MDExNzU2fDA&ixlib=rb-4.1.0&w=800&h=600&fit=crop&auto=format",
+    "cookTimeMinutes": 90,
+    "time": 90,
+    "difficulty": "Trung bình",
+    "servings": 4,
+    "status": "approved",
+    "createdAt": "2024-10-15T08:30:00.000Z",
+    "updatedAt": "2024-10-15T08:30:00.000Z"
+  },
+  {
+    "title": "Bánh Mì Thịt Nướng",
+    "description": "Bánh mì thịt nướng là món ăn đường phố nổi tiếng của Việt Nam với lớp vỏ giòn tan, nhân thịt nướng thơm lừng, kết hợp với rau củ tươi ngon và nước sốt đặc trưng.",
+    "ingredients": [
+      "4 ổ bánh mì",
+      "300g thịt heo ba chỉ",
+      "1 củ cà rốt",
+      "1 củ củ cải trắng",
+      "Rau mùi, ngò gai",
+      "Ớt, chanh",
+      "Gia vị: đường, nước mắm, tỏi, ớt"
+    ],
+    "steps": [
+      "Thái thịt heo thành miếng vừa, ướp với tỏi băm, nước mắm, đường, ớt trong 30 phút",
+      "Nướng thịt trên than hoa hoặc chảo nướng đến khi vàng đều",
+      "Ngâm cà rốt và củ cải với giấm đường làm đồ chua",
+      "Cắt bánh mì, phết pate và mayonnaise",
+      "Xếp thịt nướng, đồ chua, rau mùi vào bánh mì và thưởng thức"
+    ],
+    "categoryName": "Món Chính",
+    "imageUrl": "https://images.unsplash.com/photo-1654805128881-699fecfaac4b?ixid=M3w4MzkyODV8MHwxfHNlYXJjaHwxfHxCJUMzJUExbmglMjBNJUMzJUFDJTIwVGglRTElQkIlOEJ0JTIwTiVDNiVCMCVFMSVCQiU5Qm5nJTIwdmlldG5hbWVzZSUyMGZvb2R8ZW58MHwwfHx8MTc2NTAxMTc1OHww&ixlib=rb-4.1.0&w=800&h=600&fit=crop&auto=format",
+    "cookTimeMinutes": 45,
+    "time": 45,
+    "difficulty": "Dễ",
+    "servings": 4,
+    "status": "approved",
+    "createdAt": "2024-10-14T10:15:00.000Z",
+    "updatedAt": "2024-10-14T10:15:00.000Z"
+  },
+  {
+    "title": "Gỏi Cuốn Tôm Thịt",
+    "description": "Gỏi cuốn là món khai vị tươi mát với bánh tráng mỏng cuốn tôm, thịt, rau sống và bún. Món ăn này thanh đạm, tốt cho sức khỏe và rất phổ biến trong ẩm thực Việt Nam.",
+    "ingredients": [
+      "200g tôm tươi",
+      "200g thịt ba chỉ",
+      "100g bún tươi",
+      "10 tờ bánh tráng",
+      "Rau xà lách, rau thơm",
+      "Giá đỗ, dưa leo",
+      "Nước mắm pha chua ngọt"
+    ],
+    "steps": [
+      "Luộc tôm và thịt chín, để nguội rồi thái lát",
+      "Ngâm bánh tráng trong nước ấm cho mềm",
+      "Xếp rau xà lách, bún, tôm, thịt lên bánh tráng",
+      "Cuốn chặt lại thành hình trụ",
+      "Chấm với nước mắm pha chua ngọt và thưởng thức"
+    ],
+    "categoryName": "Món Phụ",
+    "imageUrl": "https://images.unsplash.com/photo-1680084581642-17cf51ad7760?ixid=M3w4MzkyODV8MHwxfHNlYXJjaHwxfHxHJUUxJUJCJThGaSUyMEN1JUUxJUJCJTkxbiUyMFQlQzMlQjRtJTIwVGglRTElQkIlOEJ0JTIwdmlldG5hbWVzZSUyMGZvb2R8ZW58MHwwfHx8MTc2NTAxMTg2MHww&ixlib=rb-4.1.0&w=800&h=600&fit=crop&auto=format",
+    "cookTimeMinutes": 30,
+    "time": 30,
+    "difficulty": "Dễ",
+    "servings": 4,
+    "status": "approved",
+    "createdAt": "2024-10-13T14:20:00.000Z",
+    "updatedAt": "2024-10-13T14:20:00.000Z"
+  },
+  {
+    "title": "Bún Bò Huế",
+    "description": "Bún bò Huế là đặc sản của cố đô Huế với nước dùng đậm đà, cay nồng đặc trưng. Món ăn này có sợi bún to, thịt bò mềm, chả cua và hương vị đặc biệt từ sả, ớt.",
+    "ingredients": [
+      "500g thịt bò",
+      "200g chả cua",
+      "300g bún Huế",
+      "2 lít nước dùng xương bò",
+      "Sả, ớt, tỏi",
+      "Hành lá, rau mùi",
+      "Gia vị: mắm ruốc, đường, muối"
+    ],
+    "steps": [
+      "Ninh xương bò với sả, hành tây để có nước dùng ngọt",
+      "Ướp thịt bò với tỏi, ớt, mắm ruốc rồi xào sơ",
+      "Cho thịt bò vào nước dùng, nêm nếm vừa ăn",
+      "Luộc bún, xếp vào tô cùng chả cua",
+      "Chan nước dùng nóng, thêm hành lá, ớt và thưởng thức"
+    ],
+    "categoryName": "Món Chính",
+    "imageUrl": "https://images.unsplash.com/photo-1750315606996-9f42c4c81a20?ixid=M3w4MzkyODV8MHwxfHNlYXJjaHwxfHxCJUMzJUJBbiUyMEIlQzMlQjIlMjBIdSVFMSVCQSVCRiUyMHZpZXRuYW1lc2UlMjBmb29kfGVufDB8MHx8fDE3NjUwMTE3NzF8MA&ixlib=rb-4.1.0&w=800&h=600&fit=crop&auto=format",
+    "cookTimeMinutes": 120,
+    "time": 120,
+    "difficulty": "Khó",
+    "servings": 4,
+    "status": "approved",
+    "createdAt": "2024-10-12T09:45:00.000Z",
+    "updatedAt": "2024-10-12T09:45:00.000Z"
+  },
+  {
+    "title": "Chè Đậu Xanh",
+    "description": "Chè đậu xanh là món tráng miệng truyền thống với vị ngọt thanh, mát lạnh. Món chè này giải nhiệt tốt, dễ làm và được yêu thích trong mùa hè.",
+    "ingredients": [
+      "200g đậu xanh cà",
+      "100g đường cát",
+      "1 ống vani",
+      "Dừa nạo",
+      "Đá viên"
+    ],
+    "steps": [
+      "Ngâm đậu xanh qua đêm, đãi sạch vỏ",
+      "Nấu đậu xanh với nước đến khi mềm nhừ",
+      "Thêm đường, vani, khuấy đều",
+      "Để nguội, cho vào tủ lạnh",
+      "Khi ăn thêm dừa nạo và đá viên"
+    ],
+    "categoryName": "Món Tráng Miệng",
+    "imageUrl": "https://images.unsplash.com/photo-1606315983891-469221f05c89?ixid=M3w4MzkyODV8MHwxfHNlYXJjaHwxfHxDaCVDMyVBOCUyMCVDNCU5MCVFMSVCQSVBRHUlMjBYYW5oJTIwdmlldG5hbWVzZSUyMGZvb2R8ZW58MHwwfHx8MTc2NTAxMTc5M3ww&ixlib=rb-4.1.0&w=800&h=600&fit=crop&auto=format",
+    "cookTimeMinutes": 45,
+    "time": 45,
+    "difficulty": "Dễ",
+    "servings": 4,
+    "status": "approved",
+    "createdAt": "2024-10-11T16:30:00.000Z",
+    "updatedAt": "2024-10-11T16:30:00.000Z"
+  },
+  {
+    "title": "Cà Phê Phin",
+    "description": "Cà phê phin là thức uống đặc trưng của Việt Nam với hương vị đậm đà, thơm nồng. Cách pha cà phê bằng phin tạo nên hương vị độc đáo không thể lẫn với bất kỳ nơi nào.",
+    "ingredients": [
+      "20g cà phê phin",
+      "50ml nước sôi",
+      "2 thìa sữa đặc",
+      "Đá viên"
+    ],
+    "steps": [
+      "Cho cà phê vào phin, đổ nước sôi ngập mặt cà phê",
+      "Đậy nắp phin, chờ 5 phút cho cà phê nhỏ giọt",
+      "Pha sữa đặc với cà phê đen",
+      "Thêm đá viên nếu muốn uống lạnh",
+      "Khuấy đều và thưởng thức"
+    ],
+    "categoryName": "Đồ Uống",
+    "imageUrl": "https://images.unsplash.com/photo-1723864203528-3ce90714c30a?ixid=M3w4MzkyODV8MHwxfHNlYXJjaHwxfHxDJUMzJUEwJTIwUGglQzMlQUElMjBQaGluJTIwdmlldG5hbWVzZSUyMGZvb2R8ZW58MHwwfHx8MTc2NTAxMTg2OHww&ixlib=rb-4.1.0&w=800&h=600&fit=crop&auto=format",
+    "cookTimeMinutes": 10,
+    "time": 10,
+    "difficulty": "Dễ",
+    "servings": 2,
+    "status": "approved",
+    "createdAt": "2024-10-10T07:00:00.000Z",
+    "updatedAt": "2024-10-10T07:00:00.000Z"
+  }
+]
