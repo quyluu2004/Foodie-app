@@ -82,6 +82,3 @@ npm install
 npm run start
 # Scan the QR code from your terminal using Expo Go (on physical device) or press "a" for Android emulator / "i" for iOS simulator.
 ```
-
-## 👨‍💻 Developed By
-Created as part of a comprehensive full-stack ecosystem to merge modern mobile development with real-time backend capabilities.
