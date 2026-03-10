@@ -2,8 +2,15 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import Recipe from "../models/Recipe.js";
 
 // Gemini API Configuration
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyA6vDz47prVzIGUrpEqjwj5-IrI6i3gd4o";
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+// Gemini API Configuration
+// QUAN TRỌNG: API Key phải được lấy từ biến môi trường
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  console.error("❌ [AI Service] CRITICAL ERROR: GEMINI_API_KEY is missing in .env file");
+}
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
 // Keywords để detect câu hỏi về nấu ăn, dinh dưỡng, nguyên liệu, và thực phẩm
 const COOKING_KEYWORDS = [
@@ -52,11 +59,11 @@ const COOKING_KEYWORDS = [
  */
 export const isCookingRelated = (question) => {
   if (!question || typeof question !== 'string') return false;
-  
+
   const normalizedQuestion = question.toLowerCase().trim();
-  
+
   // Kiểm tra có chứa keyword nào không
-  return COOKING_KEYWORDS.some(keyword => 
+  return COOKING_KEYWORDS.some(keyword =>
     normalizedQuestion.includes(keyword.toLowerCase())
   );
 };
@@ -72,7 +79,7 @@ export const getRecipesData = async (limit = 100) => {
       .sort({ averageRating: -1, ratingCount: -1, createdAt: -1 }) // Ưu tiên công thức có rating cao và phổ biến
       .limit(limit)
       .lean();
-    
+
     return recipes.map(recipe => ({
       id: recipe._id?.toString() || '',
       title: recipe.title || '',
@@ -99,7 +106,7 @@ export const getRecipesData = async (limit = 100) => {
 export const searchRecipesByKeyword = async (keyword) => {
   try {
     const normalizedKeyword = keyword.toLowerCase().trim();
-    
+
     const recipes = await Recipe.find({
       status: 'approved',
       $or: [
@@ -112,7 +119,7 @@ export const searchRecipesByKeyword = async (keyword) => {
       .select('_id title description ingredients steps difficulty cookTimeMinutes servings categoryName averageRating ratingCount imageUrl updatedAt')
       .limit(20)
       .lean();
-    
+
     return recipes.map(recipe => ({
       id: recipe._id?.toString() || '',
       title: recipe.title || '',
@@ -137,7 +144,7 @@ export const searchRecipesByKeyword = async (keyword) => {
  * Tạo prompt cho Gemini AI với dữ liệu động từ MongoDB
  */
 const createPrompt = (question, appData) => {
-  const recipesContext = appData.length > 0 
+  const recipesContext = appData.length > 0
     ? JSON.stringify(appData, null, 2)
     : 'Không có dữ liệu công thức trong ứng dụng.';
 
@@ -236,15 +243,29 @@ export const chatWithAI = async (question) => {
     }
 
     // Fetch recipe data from MongoDB (appData)
-    let appData = await getRecipesData(100);
-    
+    // OPTIMIZATION: Reduce limit to 40 to avoid token limits
+    let appData = await getRecipesData(40);
+
+    // OPTIMIZATION: Remove large fields like 'steps' from context
+    const optimizedAppData = appData.map(r => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      ingredients: r.ingredients, // Keep ingredients for search
+      // steps: r.steps, // Remove steps to save tokens
+      category: r.category,
+      rating: r.rating,
+      cookTime: r.cookTime,
+      difficulty: r.difficulty
+    }));
+
     // Phân tích câu hỏi để tìm công thức phù hợp
     const normalizedQuestion = question.toLowerCase();
-    
+
     // Tìm kiếm dựa trên nguyên liệu/thực phẩm được đề cập
     const ingredientKeywords = [
       // Thịt
-      'thịt bò', 'thit bo', 'beef', 'thịt gà', 'thit ga', 'chicken', 
+      'thịt bò', 'thit bo', 'beef', 'thịt gà', 'thit ga', 'chicken',
       'thịt heo', 'thit heo', 'pork', 'thịt', 'thit', 'meat',
       // Hải sản
       'cá', 'ca', 'fish', 'tôm', 'tom', 'shrimp', 'cua', 'crab', 'mực', 'muc', 'squid',
@@ -264,12 +285,12 @@ export const chatWithAI = async (question) => {
       'trứng', 'trung', 'egg', 'sữa', 'sua', 'milk', 'phô mai', 'pho mai', 'cheese',
       'gạo', 'gao', 'rice', 'mì', 'mi', 'noodle', 'bún', 'bun', 'bánh mì', 'banh mi'
     ];
-    
+
     // Tìm nguyên liệu được đề cập trong câu hỏi
-    const foundIngredient = ingredientKeywords.find(keyword => 
+    const foundIngredient = ingredientKeywords.find(keyword =>
       normalizedQuestion.includes(keyword.toLowerCase())
     );
-    
+
     // Tìm kiếm dựa trên dinh dưỡng
     const nutritionKeywords = {
       'protein': ['thịt', 'thit', 'meat', 'cá', 'ca', 'fish', 'tôm', 'tom', 'đậu', 'dau', 'trứng', 'trung', 'egg'],
@@ -282,12 +303,12 @@ export const chatWithAI = async (question) => {
       'sắt': ['thịt', 'thit', 'meat', 'cá', 'ca', 'fish', 'rau xanh', 'rau xanh'],
       'sat': ['thịt', 'thit', 'meat', 'cá', 'ca', 'fish', 'rau xanh', 'rau xanh']
     };
-    
+
     // Kiểm tra xem câu hỏi có đề cập đến dinh dưỡng không
-    const foundNutrition = Object.keys(nutritionKeywords).find(nutrition => 
+    const foundNutrition = Object.keys(nutritionKeywords).find(nutrition =>
       normalizedQuestion.includes(nutrition.toLowerCase())
     );
-    
+
     // Nếu tìm thấy nguyên liệu hoặc dinh dưỡng, tìm công thức phù hợp
     if (foundIngredient) {
       const searchedRecipes = await searchRecipesByKeyword(foundIngredient);
@@ -298,30 +319,30 @@ export const chatWithAI = async (question) => {
       // Tìm công thức có chứa nguyên liệu liên quan đến dinh dưỡng đó
       const relatedIngredients = nutritionKeywords[foundNutrition];
       const allSearchedRecipes = [];
-      
+
       for (const ingredient of relatedIngredients) {
         const recipes = await searchRecipesByKeyword(ingredient);
         allSearchedRecipes.push(...recipes);
       }
-      
+
       // Loại bỏ duplicate
       const uniqueRecipes = Array.from(
         new Map(allSearchedRecipes.map(recipe => [recipe.id, recipe])).values()
       );
-      
+
       if (uniqueRecipes.length > 0) {
         appData = uniqueRecipes.slice(0, 20); // Giới hạn 20 công thức
       }
     }
-    
+
     // Tạo prompt với appData
     const prompt = createPrompt(question, appData);
-    
-    // Call Gemini API - sử dụng models có sẵn
+
+    // Call Gemini API - sử dụng stable models
     let text = '';
-    // Models có sẵn từ API key: gemini-2.5-flash, gemini-2.0-flash, gemini-flash-latest, gemini-pro-latest
-    const modelNames = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
-    
+    // Use multiple models as fallback (each has separate quota)
+    const modelNames = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
+
     for (const modelName of modelNames) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
@@ -332,14 +353,16 @@ export const chatWithAI = async (question) => {
           break; // Thành công
         }
       } catch (modelError) {
+        console.error(`❌ [AI Service] SDK model ${modelName} failed:`, modelError.message);
         continue; // Thử model tiếp theo
       }
     }
-    
+
     // Fallback: REST API trực tiếp
     if (!text || text.trim().length === 0) {
-      const availableModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
-      
+      console.log('⚠️ [AI Service] SDK failed, trying REST API fallback');
+      const availableModels = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
+
       for (const modelName of availableModels) {
         try {
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`, {
@@ -355,7 +378,7 @@ export const chatWithAI = async (question) => {
               }]
             })
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
@@ -366,15 +389,16 @@ export const chatWithAI = async (question) => {
             }
           }
         } catch (restError) {
+          console.error(`❌ [AI Service] REST API failed:`, restError.message);
           continue;
         }
       }
     }
-    
+
     if (!text || text.trim().length === 0) {
       throw new Error('Unable to get response from Gemini API. Please check API key and model availability.');
     }
-    
+
     return {
       success: true,
       message: text.trim()
@@ -388,15 +412,15 @@ export const chatWithAI = async (question) => {
         stack: error.stack
       });
     }
-    
+
     // Trả về thông báo lỗi thân thiện
     let errorMessage = "Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.";
-    
+
     // Nếu là lỗi API key hoặc model, thông báo cụ thể hơn
     if (error.message && (error.message.includes('API key') || error.message.includes('404') || error.message.includes('not found'))) {
       errorMessage = "Xin lỗi, có vấn đề với kết nối AI. Vui lòng liên hệ admin để được hỗ trợ.";
     }
-    
+
     return {
       success: false,
       message: errorMessage
@@ -416,19 +440,19 @@ export const chatWithImage = async (imageFile, question = 'Phân tích hình ả
       fieldname: imageFile.fieldname,
       originalname: imageFile.originalname
     });
-    
+
     // Kiểm tra buffer
     if (!imageFile.buffer || imageFile.buffer.length === 0) {
       throw new Error('Image buffer is empty');
     }
-    
+
     // Chuyển đổi image buffer thành base64
     const imageBase64 = imageFile.buffer.toString('base64');
     const imageMimeType = imageFile.mimetype || 'image/jpeg';
-    
+
     console.log('📸 [Vision] Image converted to base64, length:', imageBase64.length);
     console.log('📸 [Vision] Image mime type:', imageMimeType);
-    
+
     // Validate base64
     if (!imageBase64 || imageBase64.length < 100) {
       throw new Error('Invalid image data - base64 too short');
@@ -444,7 +468,7 @@ export const chatWithImage = async (imageFile, question = 'Phân tích hình ả
       title: r.title,
       category: r.category
     }));
-    
+
     const visionPrompt = `Bạn là trợ lý AI chuyên về nấu ăn trong ứng dụng Foodie.
 
 QUY TẮC:
@@ -467,19 +491,21 @@ Câu hỏi: ${question}
 
 Phân tích hình ảnh và trả lời ngắn gọn.`;
 
-    // Chỉ thử 1 model tốt nhất để tối ưu tốc độ - gemini-2.5-flash là nhanh nhất
+    // Thử nhiều model (mỗi model có quota riêng)
     const visionModels = [
-      'gemini-2.5-flash'       // Model mới nhất, nhanh nhất, hỗ trợ vision tốt
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-flash'
     ];
 
     let text = '';
-    
+
     // Thử SDK với format đơn giản nhất để tối ưu tốc độ
     for (const modelName of visionModels) {
       try {
         console.log(`🔄 [Vision] Trying model: ${modelName}`);
         const model = genAI.getGenerativeModel({ model: modelName });
-        
+
         // Chỉ thử format đơn giản nhất (array format) - nhanh nhất
         const result = await model.generateContent([
           visionPrompt,
@@ -490,10 +516,10 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
             }
           }
         ]);
-        
+
         const response = await result.response;
         text = response.text();
-        
+
         if (text && text.trim().length > 0) {
           console.log(`✅ [Vision] Successfully analyzed image with ${modelName}`);
           break;
@@ -504,8 +530,8 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
         if (visionModels.indexOf(modelName) === 0) {
           // Thử gemini-1.5-flash làm backup
           try {
-            console.log(`🔄 [Vision] Trying backup model: gemini-1.5-flash`);
-            const backupModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            console.log(`🔄 [Vision] Trying backup model: gemini-2.0-flash`);
+            const backupModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
             const backupResult = await backupModel.generateContent([
               visionPrompt,
               {
@@ -532,7 +558,7 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
     // Nếu SDK không hoạt động, thử REST API trực tiếp (chỉ thử 1 model để tối ưu tốc độ)
     if (!text || text.trim().length === 0) {
       console.log('🔄 [Vision] Trying REST API for vision...');
-      const restModels = ['gemini-2.5-flash']; // Chỉ thử model tốt nhất
+      const restModels = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
       for (const modelName of restModels) {
         try {
           const response = await fetch(
@@ -587,11 +613,11 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
 
     if (!text || text.trim().length === 0) {
       console.log('❌ [Vision] All vision models failed. Trying keyword-based search...');
-      
+
       // Thử phân tích đơn giản dựa trên câu hỏi của user
       const questionLower = question.toLowerCase();
       const keywords = [];
-      
+
       // Tìm keywords phổ biến trong câu hỏi
       const commonFoods = ['phở', 'pho', 'bánh', 'banh', 'nem', 'chả giò', 'cha gio', 'gỏi', 'goi', 'canh', 'bún', 'bun', 'mì', 'mi'];
       for (const food of commonFoods) {
@@ -599,9 +625,9 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
           keywords.push(food);
         }
       }
-      
+
       let relatedRecipes = [];
-      
+
       if (keywords.length > 0) {
         console.log('🔍 [Vision] Found keywords:', keywords);
         for (const keyword of keywords) {
@@ -610,7 +636,7 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
         }
         relatedRecipes = Array.from(new Map(relatedRecipes.map(r => [r.id, r])).values()).slice(0, 5);
       }
-      
+
       // Nếu không tìm thấy, lấy công thức phổ biến
       if (relatedRecipes.length === 0) {
         console.log('📋 [Vision] No keyword matches, using popular recipes');
@@ -619,15 +645,15 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
           .sort({ averageRating: -1, ratingCount: -1 })
           .limit(3)
           .lean();
-        
+
         relatedRecipes = popularRecipes.map(r => ({
           id: r._id?.toString() || '',
           title: r.title || ''
         }));
       }
-      
+
       const recipeText = relatedRecipes.map(r => `[RECIPE:${r.id}:${r.title}]`).join(' ');
-      
+
       return {
         success: true,
         message: `Xin lỗi, mình không thể phân tích hình ảnh này bằng AI. Tuy nhiên, bạn có thể tham khảo các công thức liên quan sau:\n\n${recipeText}`
@@ -639,7 +665,7 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
       const analysisText = text.toLowerCase();
       const keywords = analysisText.split(/\s+/).filter(word => word.length > 3).slice(0, 5); // Chỉ lấy 5 từ quan trọng nhất
       const relatedRecipes = [];
-      
+
       // Tìm công thức theo keywords (song song để tối ưu tốc độ)
       const searchPromises = keywords.map(keyword => searchRecipesByKeyword(keyword));
       const searchResults = await Promise.all(searchPromises);
@@ -670,7 +696,7 @@ Phân tích hình ảnh và trả lời ngắn gọn.`;
     };
   } catch (error) {
     console.error('AI Image Chat Error:', error);
-    
+
     return {
       success: false,
       message: error.message || "Xin lỗi, có lỗi xảy ra khi phân tích hình ảnh. Vui lòng thử lại sau."

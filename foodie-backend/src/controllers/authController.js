@@ -10,7 +10,81 @@ import Follow from "../models/Follow.js";
 import Post from "../models/Post.js";
 import RecipeCooked from "../models/RecipeCooked.js";
 
-// 🧠 TẠO CÔNG THỨC MỚI
+// ==============================
+// 🔐 Password Policy
+// ==============================
+const PASSWORD_POLICY = {
+  minLength: 6,
+  requireUppercase: true,
+  requireNumber: true,
+  requireSpecial: true,
+};
+
+/**
+ * Kiểm tra password có đủ mạnh theo policy không
+ * @returns {{ valid: boolean, message: string }}
+ */
+const validatePasswordPolicy = (password) => {
+  if (!password || password.length < PASSWORD_POLICY.minLength) {
+    return { valid: false, message: `Mật khẩu phải có ít nhất ${PASSWORD_POLICY.minLength} ký tự` };
+  }
+  if (PASSWORD_POLICY.requireUppercase && !/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Mật khẩu phải có ít nhất 1 chữ hoa (A-Z)' };
+  }
+  if (PASSWORD_POLICY.requireNumber && !/[0-9]/.test(password)) {
+    return { valid: false, message: 'Mật khẩu phải có ít nhất 1 chữ số (0-9)' };
+  }
+  if (PASSWORD_POLICY.requireSpecial && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, message: 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt (!@#$%^&*...)' };
+  }
+  return { valid: true, message: '' };
+};
+
+// ==============================
+// 🔑 Token Helpers
+// ==============================
+
+/**
+ * Tạo access token (ngắn hạn: 1 giờ)
+ */
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { id: user._id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+};
+
+/**
+ * Tạo refresh token (dài hạn: 30 ngày)
+ */
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    { id: user._id, type: 'refresh' },
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh',
+    { expiresIn: '30d' }
+  );
+};
+
+/**
+ * Format user object cho response (loại bỏ sensitive data)
+ */
+const formatUserResponse = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  avatarUrl: user.avatarUrl || "",
+  phone: user.phone || "",
+  bio: user.bio || "",
+  gender: user.gender || "",
+  birthDate: user.birthDate || null,
+  socialLinks: user.socialLinks || {},
+  role: user.role || "user",
+  isPrivate: user.isPrivate || false,
+});
+
+// ==============================
+// 📝 ĐĂNG KÝ
 export const register = async (req, res) => {
   try {
     // Kiểm tra JWT_SECRET có tồn tại không
@@ -20,21 +94,16 @@ export const register = async (req, res) => {
     }
 
     // Validate request body
-    console.log('📥 Request body:', req.body);
-    console.log('📥 Request body keys:', Object.keys(req.body));
-    console.log('📥 Email value:', req.body.email);
-    console.log('📥 Email type:', typeof req.body.email);
-    
+    // console.log('📥 Request body:', req.body); // Debug only
+
     const { email, password, name, phone, bio, gender, birthDate, avatarUrl } = req.body;
-    
+
     // Kiểm tra email có tồn tại và là string
     if (!email || typeof email !== 'string' || email.trim() === '') {
-      console.log('❌ Email validation failed: email is missing or empty');
       return res.status(400).json({ message: "Email và mật khẩu là bắt buộc" });
     }
-    
+
     if (!password || typeof password !== 'string' || password.trim() === '') {
-      console.log('❌ Password validation failed: password is missing or empty');
       return res.status(400).json({ message: "Email và mật khẩu là bắt buộc" });
     }
 
@@ -42,28 +111,23 @@ export const register = async (req, res) => {
     const emailTrimmed = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailTrimmed)) {
-      console.log('❌ Email format validation failed:', emailTrimmed);
       return res.status(400).json({ message: "Email không hợp lệ" });
     }
 
-    if (password.trim().length < 6) {
-      return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự" });
+    // 🔐 Kiểm tra password policy
+    const passwordCheck = validatePasswordPolicy(password.trim());
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ message: passwordCheck.message });
     }
-    
+
     // Sử dụng email đã trim và lowercase
     const finalEmail = emailTrimmed;
 
-    console.log('📝 Register request received:', { email, name: name || 'N/A' });
-    console.log('🔑 JWT_SECRET exists:', !!process.env.JWT_SECRET);
-    
     // Kiểm tra email đã tồn tại chưa
-    console.log('🔍 Checking if email exists...');
     const exists = await User.findOne({ email: finalEmail });
     if (exists) {
-      console.log('❌ Email already exists:', finalEmail);
       return res.status(400).json({ message: "Email đã tồn tại" });
     }
-    console.log('✅ Email is available');
 
     // Xử lý avatar: ưu tiên file upload, sau đó là avatarUrl từ body, cuối cùng là mặc định
     let finalAvatarUrl = "https://res.cloudinary.com/demo/image/upload/w_400,h_400,c_fill,g_face,r_max/w_200/lady.jpg";
@@ -81,18 +145,15 @@ export const register = async (req, res) => {
       }
     } else if (avatarUrl) {
       finalAvatarUrl = avatarUrl;
-      console.log('✅ Using provided avatarUrl:', finalAvatarUrl);
     }
 
     // Hash password
-    console.log('🔒 Hashing password...');
     const passwordHash = await bcrypt.hash(password, 10);
-    console.log('✅ Password hashed');
-    
+
     // Chuẩn bị dữ liệu user
     const userData = {
-      email: finalEmail, 
-      passwordHash, 
+      email: finalEmail,
+      passwordHash,
       name: (name || "Foodie User").trim(),
       role: "user",
       avatarUrl: finalAvatarUrl,
@@ -101,20 +162,13 @@ export const register = async (req, res) => {
       gender: (gender || "").trim(),
       birthDate: birthDate ? new Date(birthDate) : null
     };
-    
-    // Tạo user trong database
-    console.log('💾 Creating user in database...');
-    const user = await User.create(userData);
-    console.log('✅ User created:', user._id);
 
-    // Tạo JWT token
-    console.log('🎫 Generating JWT token...');
-    const token = jwt.sign(
-      { id: user._id, email: finalEmail }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: "7d" }
-    );
-    console.log('✅ Token generated');
+    // Tạo user trong database
+    const user = await User.create(userData);
+
+    // 🔑 Tạo access token + refresh token
+    const token = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
     // Gửi email xác nhận đăng ký (không chặn response nếu lỗi)
     try {
@@ -124,22 +178,11 @@ export const register = async (req, res) => {
     }
 
     // Trả về response thành công
-    console.log('✅ Registration successful, sending response');
-    res.json({ 
+    res.json({
       message: "Success",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl || "",
-        phone: user.phone || "",
-        bio: user.bio || "",
-        gender: user.gender || "",
-        birthDate: user.birthDate || null,
-        socialLinks: user.socialLinks || {},
-        role: user.role || "user"
-      }, 
-      token 
+      user: formatUserResponse(user),
+      token,
+      refreshToken
     });
   } catch (err) {
     console.error('❌ Register error:', err);
@@ -147,12 +190,12 @@ export const register = async (req, res) => {
     console.error('❌ Error code:', err.code);
     console.error('❌ Error message:', err.message);
     console.error('❌ Error stack:', err.stack);
-    
+
     if (err.name === 'ValidationError') {
       console.error('❌ Validation error:', err.message);
       return res.status(400).json({ message: "Dữ liệu không hợp lệ: " + err.message });
     }
-    
+
     if (err.code === 11000) {
       console.error('❌ Duplicate email error');
       return res.status(400).json({ message: "Email đã tồn tại" });
@@ -160,7 +203,7 @@ export const register = async (req, res) => {
 
     const errorMessage = err.message || "Lỗi hệ thống. Vui lòng thử lại sau.";
     console.error('❌ Sending error response:', errorMessage);
-    res.status(500).json({ 
+    res.status(500).json({
       message: errorMessage
     });
   }
@@ -174,13 +217,7 @@ export const login = async (req, res) => {
     }
 
     const { email, password } = req.body;
-    
-    console.log('🔐 Login request received:', { 
-      email: email ? email.substring(0, 10) + '...' : 'missing',
-      hasPassword: !!password,
-      passwordLength: password ? password.length : 0
-    });
-    
+
     if (!email || !password) {
       return res.status(400).json({ message: "Email và mật khẩu là bắt buộc" });
     }
@@ -188,56 +225,31 @@ export const login = async (req, res) => {
     // Trim và normalize email
     const emailTrimmed = email.trim().toLowerCase();
     const passwordTrimmed = password.trim();
-    
-    console.log('🔍 Searching for user with email:', emailTrimmed);
 
     // Tìm user trong database
     const user = await User.findOne({ email: emailTrimmed });
     if (!user) {
-      console.log('❌ User not found:', emailTrimmed);
-      return res.status(400).json({ message: "Email không tồn tại" });
+      // 🔐 Thống nhất error message để tránh user enumeration
+      return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
     }
-
-    console.log('✅ User found:', user._id);
-    console.log('🔑 Comparing password...');
-    console.log('   - Input password length:', passwordTrimmed.length);
-    console.log('   - Stored hash exists:', !!user.passwordHash);
-    console.log('   - Stored hash length:', user.passwordHash ? user.passwordHash.length : 0);
 
     // So sánh password
     const match = await bcrypt.compare(passwordTrimmed, user.passwordHash);
-    console.log('🔑 Password match result:', match);
-    
-    if (!match) {
-      console.log('❌ Password mismatch');
-      return res.status(400).json({ message: "Sai mật khẩu" });
-    }
-    
-    console.log('✅ Password verified successfully');
 
-    // Tạo JWT token
-    const token = jwt.sign(
-      { id: user._id, email: emailTrimmed }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: "7d" }
-    );
-    console.log('✅ Token generated');
+    if (!match) {
+      // 🔐 Cùng error message với email không tồn tại
+      return res.status(400).json({ message: "Email hoặc mật khẩu không đúng" });
+    }
+
+    // 🔑 Tạo access token + refresh token
+    const token = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
     res.json({
       message: "Đăng nhập thành công",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl || "",
-        phone: user.phone || "",
-        bio: user.bio || "",
-        gender: user.gender || "",
-        birthDate: user.birthDate || null,
-        socialLinks: user.socialLinks || {},
-        role: user.role || "user"
-      },
-      token
+      user: formatUserResponse(user),
+      token,
+      refreshToken
     });
   } catch (error) {
     console.error("❌ Lỗi khi đăng nhập:", error);
@@ -286,19 +298,7 @@ export const updateProfile = async (req, res) => {
 
     res.json({
       message: "Cập nhật profile thành công",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl || "",
-        phone: user.phone || "",
-        bio: user.bio || "",
-        gender: user.gender || "",
-        birthDate: user.birthDate || null,
-        socialLinks: user.socialLinks || {},
-        role: user.role || "user",
-        isPrivate: user.isPrivate || false
-      }
+      user: formatUserResponse(user)
     });
   } catch (error) {
     console.error("❌ Lỗi cập nhật profile:", error);
@@ -310,9 +310,9 @@ export const getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
     const currentUserId = req.user?._id; // User đang xem profile
-    
+
     const user = await User.findById(userId).select("-passwordHash");
-    
+
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy user" });
     }
@@ -334,19 +334,19 @@ export const getUserById = async (req, res) => {
     // Tính toán số lượng followers, following, và posts
     // followersCount: Số người đang theo dõi user này (following: userId nghĩa là userId được follow)
     const followersCount = await Follow.countDocuments({ following: userId });
-    
+
     // followingCount: Số người mà user này đang theo dõi (follower: userId nghĩa là userId đang follow)
     const followingCount = await Follow.countDocuments({ follower: userId });
-    
+
     // postsCount: Số bài đăng của user này
     const postsCount = await Post.countDocuments({ user: userId });
-    
+
     // ratingsCount: Số đánh giá của user này
-    const ratingsCount = await RecipeCooked.countDocuments({ 
-      user: userId, 
-      rating: { $exists: true, $ne: null } 
+    const ratingsCount = await RecipeCooked.countDocuments({
+      user: userId,
+      rating: { $exists: true, $ne: null }
     });
-    
+
     console.log(`📊 User ${userId} stats:`, {
       followers: followersCount,
       following: followingCount,
@@ -409,7 +409,7 @@ export const uploadAvatar = async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
-    
+
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy user" });
     }
@@ -439,7 +439,7 @@ export const uploadAvatar = async (req, res) => {
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-passwordHash");
-    
+
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy user" });
     }
@@ -499,14 +499,14 @@ export const promoteUser = async (req, res) => {
 
     // ✅ Validation: lý do bắt buộc
     if (!reason || reason.trim().length < 10) {
-      return res.status(400).json({ 
-        message: "Lý do nâng cấp là bắt buộc và phải có ít nhất 10 ký tự" 
+      return res.status(400).json({
+        message: "Lý do nâng cấp là bắt buộc và phải có ít nhất 10 ký tự"
       });
     }
 
     if (reason.trim().length > 500) {
-      return res.status(400).json({ 
-        message: "Lý do nâng cấp không được vượt quá 500 ký tự" 
+      return res.status(400).json({
+        message: "Lý do nâng cấp không được vượt quá 500 ký tự"
       });
     }
 
@@ -590,14 +590,14 @@ export const promoteUser = async (req, res) => {
         relatedType: null,
         isRead: false,
       });
-      
+
       // Emit notification event via Socket.IO
       const io = req.app.get('io');
       if (io) {
         io.to(`user:${user._id}`).emit('newNotification');
         console.log(`📤 Emitted newNotification event to user:${user._id}`);
       }
-      
+
       console.log(`✅ Đã tạo notification cho user ${user._id} về việc được promote`);
     } catch (notificationError) {
       console.error('⚠️ Lỗi tạo notification (không ảnh hưởng đến promote):', notificationError);
@@ -633,7 +633,7 @@ export const deleteUser = async (req, res) => {
 
     const { userId } = req.params;
     const { reason } = req.body; // Lý do xóa từ admin (tùy chọn)
-    
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy user" });
@@ -679,6 +679,12 @@ export const changePassword = async (req, res) => {
     const match = await bcrypt.compare(oldPassword, user.passwordHash);
     if (!match) {
       return res.status(400).json({ message: "Mật khẩu cũ không đúng" });
+    }
+
+    // 🔐 Kiểm tra password policy cho mật khẩu mới
+    const passwordCheck = validatePasswordPolicy(newPassword);
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ message: passwordCheck.message });
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
@@ -766,14 +772,14 @@ export const adminChangeUserPassword = async (req, res) => {
         relatedType: null,
         isRead: false,
       });
-      
+
       // Emit notification event via Socket.IO
       const io = req.app.get('io');
       if (io) {
         io.to(`user:${user._id}`).emit('newNotification');
         console.log(`📤 Emitted newNotification event to user:${user._id}`);
       }
-      
+
       console.log(`✅ Đã tạo notification cho user ${user._id} về việc đổi mật khẩu`);
     } catch (notificationError) {
       console.error('⚠️ Lỗi tạo notification (không ảnh hưởng đến đổi mật khẩu):', notificationError);
@@ -794,7 +800,7 @@ export const getAdminUserDetail = async (req, res) => {
 
     const { userId } = req.params;
     const user = await User.findById(userId).select("-passwordHash");
-    
+
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy user" });
     }
@@ -824,3 +830,51 @@ export const getAdminUserDetail = async (req, res) => {
     });
   }
 };
+
+// ==============================
+// 🔑 REFRESH TOKEN
+// ==============================
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken: token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: "Refresh token là bắt buộc" });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh'
+    );
+
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ message: "Token không hợp lệ" });
+    }
+
+    // Tìm user
+    const user = await User.findById(decoded.id).select("-passwordHash");
+    if (!user) {
+      return res.status(401).json({ message: "Người dùng không tồn tại" });
+    }
+
+    // Tạo access token mới
+    const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+
+    res.json({
+      message: "Token đã được làm mới",
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: "Refresh token đã hết hạn. Vui lòng đăng nhập lại." });
+    }
+    console.error("❌ Lỗi refresh token:", error.message);
+    return res.status(401).json({ message: "Token không hợp lệ" });
+  }
+};
+
+// Export password policy cho validate.js sử dụng
+export { validatePasswordPolicy };

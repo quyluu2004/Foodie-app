@@ -1,20 +1,21 @@
 import { Router } from "express";
 import multer from "multer";
 import { avatarStorage } from "../config/cloudinary.js";
-import { 
-  register, 
-  login, 
-  updateProfile, 
-  getUserById, 
-  uploadAvatar, 
-  getAllUsers, 
-  promoteUser, 
+import {
+  register,
+  login,
+  updateProfile,
+  getUserById,
+  uploadAvatar,
+  getAllUsers,
+  promoteUser,
   deleteUser,
   changePassword,
   requestPasswordReset,
   adminChangeUserPassword,
   getAdminUserDetail,
-  getCurrentUser
+  getCurrentUser,
+  refreshToken
 } from "../controllers/authController.js";
 import { googleAuth } from "../controllers/googleAuth.js";
 import { auth } from "../middleware/auth.js";
@@ -29,7 +30,7 @@ import {
   validateObjectId,
 } from "../middleware/validate.js";
 
-const upload = multer({ 
+const upload = multer({
   storage: avatarStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
@@ -44,9 +45,11 @@ const upload = multer({
 const router = Router();
 
 // 🔐 Authentication routes với validation
-router.post("/register", validateRegister, upload.single("avatar"), register);
+// Multer phải chạy trước validation để parse FormData vào req.body
+router.post("/register", upload.single("avatar"), validateRegister, register);
 router.post("/login", validateLogin, login);
 router.post("/google", googleAuth); // Google OAuth
+router.post("/refresh-token", refreshToken); // 🔑 Refresh token
 
 // 🔐 Profile management với validation
 router.post("/upload-avatar", auth, upload.single("avatar"), uploadAvatar);

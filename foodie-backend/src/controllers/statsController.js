@@ -4,6 +4,7 @@ import Post from "../models/Post.js";
 import Favorite from "../models/Favorite.js";
 import Saved from "../models/Saved.js";
 import RecipeCooked from "../models/RecipeCooked.js";
+import RecipeViewHistory from "../models/RecipeViewHistory.js";
 import Follow from "../models/Follow.js";
 import Collection from "../models/Collection.js";
 import Report from "../models/Report.js";
@@ -856,6 +857,230 @@ export const getAnalyticsStats = async (req, res) => {
     console.error("❌ Lỗi lấy thống kê analytics:", error);
     res.status(500).json({
       message: "Lỗi lấy thống kê analytics",
+      error: error.message,
+    });
+  }
+};
+
+// Lấy thống kê cho Creator Dashboard
+export const getCreatorStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Kiểm tra user có phải creator không
+    const user = await User.findById(userId);
+    if (user.role !== 'creator' && user.role !== 'admin') {
+      return res.status(403).json({
+        message: "Chỉ Creator mới có quyền xem thống kê này",
+      });
+    }
+
+    // Lấy tất cả recipes của creator
+    const creatorRecipes = await Recipe.find({ author: userId, status: 'approved' });
+    const recipeIds = creatorRecipes.map(r => r._id);
+
+    // 1. Tổng số Views (lượt xem)
+    const totalViews = await RecipeViewHistory.countDocuments({
+      recipe: { $in: recipeIds }
+    });
+
+    // Views theo thời gian (7 ngày gần nhất)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const viewsByDate = await RecipeViewHistory.aggregate([
+      {
+        $match: {
+          recipe: { $in: recipeIds },
+          viewedAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$viewedAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 2. Tổng số Saves (lượt lưu)
+    const totalSaves = await Saved.countDocuments({
+      recipe: { $in: recipeIds }
+    });
+
+    // Saves theo thời gian (7 ngày gần nhất)
+    const savesByDate = await Saved.aggregate([
+      {
+        $match: {
+          recipe: { $in: recipeIds },
+          createdAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 3. Tổng số Cooked (lượt nấu thử)
+    const totalCooked = await RecipeCooked.countDocuments({
+      recipe: { $in: recipeIds }
+    });
+
+    // Cooked theo thời gian (7 ngày gần nhất)
+    const cookedByDate = await RecipeCooked.aggregate([
+      {
+        $match: {
+          recipe: { $in: recipeIds },
+          createdAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 4. Top recipes (theo lượt lưu)
+    const topRecipesBySaves = await Saved.aggregate([
+      {
+        $match: { recipe: { $in: recipeIds } }
+      },
+      {
+        $group: {
+          _id: "$recipe",
+          saveCount: { $sum: 1 }
+        }
+      },
+      { $sort: { saveCount: -1 } },
+      { $limit: 5 }
+    ]);
+
+    const topRecipeIds = topRecipesBySaves.map(r => r._id);
+    const topRecipes = await Recipe.find({ _id: { $in: topRecipeIds } })
+      .select("title imageUrl videoThumbnail categoryName")
+      .lean();
+
+    // Thêm số lượt lưu vào mỗi recipe
+    const topRecipesWithStats = topRecipes.map(recipe => {
+      const stats = topRecipesBySaves.find(s => s._id.toString() === recipe._id.toString());
+      return {
+        ...recipe,
+        saveCount: stats?.saveCount || 0
+      };
+    });
+
+    // 5. Insights: Khung giờ đăng bài nhiều like nhất
+    const hourInsights = await Recipe.aggregate([
+      {
+        $match: {
+          author: userId,
+          status: 'approved'
+        }
+      },
+      {
+        $project: {
+          hour: { $hour: "$createdAt" },
+          likesCount: { $size: "$likes" }
+        }
+      },
+      {
+        $group: {
+          _id: "$hour",
+          totalLikes: { $sum: "$likesCount" },
+          recipeCount: { $sum: 1 }
+        }
+      },
+      { $sort: { totalLikes: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // 6. Món ăn đang hot (top recipes theo lượt lưu + lượt nấu)
+    const hotRecipes = await Saved.aggregate([
+      {
+        $match: { recipe: { $in: recipeIds } }
+      },
+      {
+        $group: {
+          _id: "$recipe",
+          saveCount: { $sum: 1 }
+        }
+      },
+      { $sort: { saveCount: -1 } },
+      { $limit: 10 }
+    ]);
+
+    const hotRecipeIds = hotRecipes.map(r => r._id);
+    const hotRecipesData = await Recipe.find({ _id: { $in: hotRecipeIds } })
+      .select("title imageUrl videoThumbnail categoryName")
+      .lean();
+
+    // Thêm stats cho hot recipes
+    const hotRecipesWithStats = await Promise.all(
+      hotRecipesData.map(async (recipe) => {
+        const saveCount = hotRecipes.find(s => s._id.toString() === recipe._id.toString())?.saveCount || 0;
+        const cookedCount = await RecipeCooked.countDocuments({ recipe: recipe._id });
+        const viewCount = await RecipeViewHistory.countDocuments({ recipe: recipe._id });
+        
+        return {
+          ...recipe,
+          saveCount,
+          cookedCount,
+          viewCount,
+          totalEngagement: saveCount + cookedCount + viewCount
+        };
+      })
+    );
+
+    // Sắp xếp theo total engagement
+    hotRecipesWithStats.sort((a, b) => b.totalEngagement - a.totalEngagement);
+
+    // 7. Tổng số recipes
+    const totalRecipes = creatorRecipes.length;
+
+    // 8. Tổng số likes
+    const totalLikes = creatorRecipes.reduce((sum, recipe) => sum + (recipe.likes?.length || 0), 0);
+
+    res.status(200).json({
+      overview: {
+        totalRecipes,
+        totalViews,
+        totalSaves,
+        totalCooked,
+        totalLikes,
+      },
+      growth: {
+        views: viewsByDate,
+        saves: savesByDate,
+        cooked: cookedByDate,
+      },
+      topRecipes: topRecipesWithStats,
+      hotRecipes: hotRecipesWithStats.slice(0, 5),
+      insights: {
+        bestPostingHours: hourInsights.map(h => ({
+          hour: h._id,
+          totalLikes: h.totalLikes,
+          recipeCount: h.recipeCount,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("❌ Lỗi lấy thống kê creator:", error);
+    res.status(500).json({
+      message: "Lỗi lấy thống kê creator",
       error: error.message,
     });
   }

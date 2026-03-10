@@ -6,6 +6,7 @@ import Comment from "../models/Comment.js";
 import RecipeViewHistory from "../models/RecipeViewHistory.js";
 import Saved from "../models/Saved.js";
 import Favorite from "../models/Favorite.js";
+import PremiumPurchase from "../models/PremiumPurchase.js";
 import { isAdmin, isAdminOrCreator, canEdit, canDelete } from "../utils/roleHelpers.js";
 import { normalizeVietnameseText, getVietnameseCharVariants } from "../utils/textUtils.js";
 
@@ -802,6 +803,39 @@ export const getRecipeById = async (req, res) => {
       categoryName: recipe.categoryName,
     });
 
+    // Kiểm tra premium và purchase status
+    let hasPurchased = false;
+    let canViewFullContent = true;
+
+    if (recipe.isPremium) {
+      // Nếu là recipe của chính mình, có thể xem
+      const authorId = recipe.author?._id || recipe.author || recipe.createdBy?._id || recipe.createdBy;
+      if (req.user && req.user._id && authorId.toString() === req.user._id.toString()) {
+        hasPurchased = true;
+        canViewFullContent = true;
+      } else if (req.user && req.user._id) {
+        // Kiểm tra đã mua chưa
+        const purchase = await PremiumPurchase.findOne({
+          user: req.user._id,
+          recipe: recipe._id,
+        });
+        hasPurchased = !!purchase;
+        canViewFullContent = hasPurchased;
+      } else {
+        // Chưa đăng nhập
+        canViewFullContent = false;
+      }
+
+      // Nếu không thể xem full content, ẩn ingredients và steps
+      if (!canViewFullContent) {
+        recipe.ingredients = [];
+        recipe.steps = [];
+        recipe.description = recipe.description 
+          ? `${recipe.description.substring(0, 100)}... (Công thức Premium - Cần mua để xem đầy đủ)`
+          : "Công thức Premium - Cần mua để xem đầy đủ";
+      }
+    }
+
     // Track view history nếu user đã đăng nhập
     if (req.user && req.user._id) {
       try {
@@ -822,7 +856,11 @@ export const getRecipeById = async (req, res) => {
 
     res.status(200).json({
       message: "Lấy công thức thành công",
-      recipe: recipe,
+      recipe: {
+        ...recipe,
+        hasPurchased,
+        canViewFullContent,
+      },
     });
   } catch (error) {
     console.error("❌ Lỗi khi lấy công thức:", error);

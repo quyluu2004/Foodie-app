@@ -4,7 +4,7 @@ import User from "../models/User.js";
 export const auth = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"];
-    console.log("🪪 Authorization Header:", authHeader);
+    // console.log("🪪 Authorization Header:", authHeader);
 
     if (!authHeader) {
       return res.status(401).json({ message: "Thiếu token" });
@@ -22,11 +22,11 @@ export const auth = async (req, res, next) => {
     }
 
     // Log user info for debugging (remove in production)
-    console.log('🔐 Auth Middleware - User authenticated:', {
-      userId: user._id,
-      email: user.email,
-      role: user.role
-    });
+    // console.log('🔐 Auth Middleware - User authenticated:', {
+    //   userId: user._id,
+    //   email: user.email,
+    //   role: user.role
+    // });
 
     req.user = user;
     next();

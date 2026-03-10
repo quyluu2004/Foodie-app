@@ -35,7 +35,12 @@ const recipeSchema = new mongoose.Schema(
     // Ratings: lưu tổng rating và số lượng đánh giá để tính trung bình
     totalRating: { type: Number, default: 0 }, // Tổng điểm rating
     ratingCount: { type: Number, default: 0 }, // Số lượng đánh giá
-    averageRating: { type: Number, default: 0 } // Điểm trung bình (tự động tính)
+    averageRating: { type: Number, default: 0 }, // Điểm trung bình (tự động tính)
+    // Premium recipe fields
+    isPremium: { type: Boolean, default: false }, // Công thức premium (phải trả phí)
+    price: { type: Number, default: 0 }, // Giá (xu) để xem công thức premium
+    totalPurchases: { type: Number, default: 0 }, // Tổng số lượt mua
+    totalRevenue: { type: Number, default: 0 }, // Tổng doanh thu từ công thức này
   },
   { timestamps: true }
 );

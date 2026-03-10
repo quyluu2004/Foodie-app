@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, Heart, MessageCircle } from 'lucide-react';
 
 export default function TablePosts({ posts = [], onEdit, onDelete }) {
   // onDelete now receives the full post object instead of just postId
@@ -106,8 +106,9 @@ export default function TablePosts({ posts = [], onEdit, onDelete }) {
                                  normalizedImageUrl !== 'null' && 
                                  normalizedImageUrl !== 'undefined';
 
-                const commentsCount = post.comments?.length || 0;
-                const likesCount = post.likes?.length || 0;
+                // Đếm lượt thích/bình luận với các key dự phòng
+                const likesCount = post.likesCount ?? post.likes?.length ?? 0;
+                const commentsCount = post.commentsCount ?? post.comments?.length ?? 0;
 
                 return (
                 <tr key={post._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 table-row">
@@ -149,14 +150,14 @@ export default function TablePosts({ posts = [], onEdit, onDelete }) {
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{userEmail}</div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    <span className="px-2 py-1 bg-red-50 text-red-600 dark:bg-red-900 dark:text-red-200 rounded-full text-xs font-medium">
-                      ❤️ {likesCount}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-100 rounded-full text-xs font-semibold">
+                      <Heart className="w-4 h-4" /> {likesCount}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
-                      💬 {commentsCount}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-100 rounded-full text-xs font-semibold">
+                      <MessageCircle className="w-4 h-4" /> {commentsCount}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

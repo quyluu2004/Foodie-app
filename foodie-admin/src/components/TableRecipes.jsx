@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Filter, Eye, Edit, Trash2, CheckCircle, XCircle, Video, X } from 'lucide-react';
 
 export default function TableRecipes({ recipes = [], categories = [], onApprove, onReject, onEdit, onDelete }) {
@@ -319,50 +320,58 @@ export default function TableRecipes({ recipes = [], categories = [], onApprove,
       </div>
 
       {/* Video Modal */}
-      {selectedVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 animate__animated animate__fadeIn">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 animate__animated animate__zoomIn">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {selectedVideo.title}
-                </h3>
-                {selectedVideo.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {selectedVideo.description}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                <video
-                  src={selectedVideo.url}
-                  controls
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                  style={{ objectFit: 'contain' }}
-                >
-                  Trình duyệt của bạn không hỗ trợ video.
-                </video>
-              </div>
-              <div className="mt-4 flex justify-end">
+      {selectedVideo &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+            onClick={() => setSelectedVideo(null)}
+          >
+            <div
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden animate__animated animate__zoomIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white line-clamp-2">
+                    {selectedVideo.title}
+                  </h3>
+                  {selectedVideo.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                      {selectedVideo.description}
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => setSelectedVideo(null)}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  Đóng
+                  <X className="w-6 h-6" />
                 </button>
               </div>
+              <div className="p-5">
+                <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
+                  <video
+                    src={selectedVideo.url}
+                    controls
+                    className="absolute inset-0 w-full h-full"
+                    style={{ objectFit: 'contain' }}
+                  >
+                    Trình duyệt của bạn không hỗ trợ video.
+                  </video>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => setSelectedVideo(null)}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

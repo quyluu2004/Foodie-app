@@ -18,17 +18,18 @@ import {
   FileText,
   Star,
   Home,
+  UserPlus,
 } from 'lucide-react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
 const menuItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/users', icon: Users, label: 'Người dùng' },
+  { path: '/creator-requests', icon: UserPlus, label: 'Yêu cầu Creator' },
   { path: '/recipes', icon: ChefHat, label: 'Công thức' },
   { path: '/posts', icon: FileText, label: 'Quản lý bài đăng' },
   { path: '/homepage', icon: Home, label: 'Quản lý trang chủ' },
   { path: '/categories', icon: FolderTree, label: 'Danh mục' },
-  { path: '/messages', icon: MessageSquare, label: 'Tin nhắn' },
   { path: '/chat', icon: MessageCircle, label: 'Chat trực tiếp' },
   { path: '/notifications', icon: Bell, label: 'Thông báo hệ thống' },
   { path: '/comments', icon: MessageSquare, label: 'Bình luận' },

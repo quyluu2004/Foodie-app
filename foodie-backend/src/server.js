@@ -11,8 +11,10 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./config/db.js";
 import { socketAuth } from "./middleware/socketAuth.js";
-// Rate limiting đã tắt để app hoạt động thuận tiện hơn
-// import { apiLimiter, authLimiter, aiLimiter, uploadLimiter } from "./middleware/rateLimiter.js";
+import { sanitizeInput } from "./middleware/sanitize.js";
+import { enforceHttps, additionalSecurityHeaders } from "./middleware/security.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { apiLimiter, authLimiter, aiLimiter, uploadLimiter } from "./middleware/rateLimiter.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import recipeRoutes from "./routes/recipe.routes.js";
@@ -31,18 +33,10 @@ import messageRoutes from "./routes/message.routes.js";
 import homepageRoutes from "./routes/homepage.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import creatorRequestRoutes from "./routes/creatorRequest.routes.js";
+import premiumRoutes from "./routes/premium.routes.js";
 
-// Kiểm tra các biến môi trường bắt buộc
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingEnvVars.length > 0) {
-  console.error('❌ Thiếu các biến môi trường bắt buộc:', missingEnvVars.join(', '));
-  console.error('⚠️  Vui lòng tạo file .env với các biến sau:');
-  console.error('   MONGO_URI=your_mongodb_connection_string');
-  console.error('   JWT_SECRET=your_jwt_secret_key');
-  process.exit(1);
-}
+// Env validation đã xử lý trong config/env.js
 
 const app = express();
 
@@ -50,38 +44,38 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+
+// 🔐 HTTPS enforcement (chỉ production)
+app.use(enforceHttps);
+
+// 🔐 Security headers bổ sung
+app.use(additionalSecurityHeaders);
+
 // CORS configuration
-// In production, restrict to specific origins for security
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? (process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'])
-    : '*', // Allow all origins in development (for Expo / mobile devices)
+    : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 };
 app.use(cors(corsOptions));
 app.use(helmet({
-  crossOriginResourcePolicy: false // Cho phép truy cập từ mobile app
+  crossOriginResourcePolicy: false
 }));
-app.use(morgan("dev"));
 
-// 🔒 Rate Limiting - ĐÃ TẮT để app hoạt động thuận tiện hơn
-// app.use("/api", apiLimiter);
+// 🔐 XSS Sanitization cho tất cả input
+app.use(sanitizeInput);
 
-// Log requests chỉ trong development để tránh log sensitive data trong production
+// Logging - chỉ dev
 if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    // Chỉ log headers và body trong development, không log sensitive data
-    if (req.path !== '/api/auth/login' && req.path !== '/api/auth/register') {
-      console.log('Headers:', req.headers);
-      console.log('Body:', req.body);
-    }
-    next();
-  });
+  app.use(morgan("dev"));
 }
+
+// 🔒 Rate Limiting — Bảo vệ API khỏi abuse
+app.use("/api", apiLimiter);
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -113,13 +107,13 @@ app.get("/api", (_, res) => {
   });
 });
 
-// 🔒 Rate Limiting - ĐÃ TẮT để app hoạt động thuận tiện hơn
-// app.use("/api/auth/login", authLimiter);
-// app.use("/api/auth/register", authLimiter);
+// 🔒 Rate Limiting cho auth
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 app.use("/api/auth", authRoutes);
 
-// 🔒 Rate Limiting - ĐÃ TẮT
-// app.use("/api/ai", aiLimiter);
+// 🔒 Rate Limiting cho AI
+app.use("/api/ai", aiLimiter);
 app.use("/api/ai", aiRoutes);
 
 // Các routes khác
@@ -138,17 +132,23 @@ app.use("/api/rating", ratingRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/homepage", homepageRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/creator-requests", creatorRequestRoutes);
+app.use("/api/premium", premiumRoutes);
+
+// 🔐 Centralized Error Handling (phải đặt sau tất cả routes)
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
 
 connectDB(process.env.MONGO_URI).then(() => {
   // Create HTTP server
   const httpServer = createServer(app);
-  
+
   // Initialize Socket.IO
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.NODE_ENV === 'production' 
+      origin: process.env.NODE_ENV === 'production'
         ? (process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'])
         : '*',
       methods: ['GET', 'POST'],
@@ -167,7 +167,9 @@ connectDB(process.env.MONGO_URI).then(() => {
   // Socket.IO connection handler
   io.on('connection', (socket) => {
     const userId = socket.userId;
-    console.log(`✅ Socket connected: User ${userId} (Socket ID: ${socket.id})`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Socket connected: User ${userId}`);
+    }
 
     // Join user's personal room
     socket.join(`user:${userId}`);
@@ -176,7 +178,6 @@ connectDB(process.env.MONGO_URI).then(() => {
     socket.on('joinConversation', (conversationId) => {
       if (conversationId) {
         socket.join(`conversation:${conversationId}`);
-        console.log(`📥 User ${userId} joined conversation: ${conversationId}`);
       }
     });
 
@@ -184,25 +185,13 @@ connectDB(process.env.MONGO_URI).then(() => {
     socket.on('leaveConversation', (conversationId) => {
       if (conversationId) {
         socket.leave(`conversation:${conversationId}`);
-        console.log(`📤 User ${userId} left conversation: ${conversationId}`);
       }
     });
 
     // Handle disconnect
     socket.on('disconnect', (reason) => {
-      console.log(`❌ Socket disconnected: User ${userId} (Socket ID: ${socket.id}, Reason: ${reason})`);
-      
-      // Log different disconnect reasons for debugging
-      if (reason === 'io server disconnect') {
-        console.log(`   → Server initiated disconnect for user ${userId}`);
-      } else if (reason === 'io client disconnect') {
-        console.log(`   → Client initiated disconnect for user ${userId}`);
-      } else if (reason === 'ping timeout') {
-        console.log(`   → Ping timeout for user ${userId} - connection may be unstable`);
-      } else if (reason === 'transport close') {
-        console.log(`   → Transport closed for user ${userId} - network issue`);
-      } else if (reason === 'transport error') {
-        console.log(`   → Transport error for user ${userId} - connection error`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`❌ Socket disconnected: User ${userId} (${reason})`);
       }
     });
   });

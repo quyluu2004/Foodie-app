@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { auth } from "../middleware/auth.js";
+import { cacheResponse, invalidateCache } from "../middleware/cache.js";
 import {
   getAllCategories,
   getCategoryById,
@@ -30,9 +31,9 @@ const upload = multer({
 
 const router = Router();
 
-// Public routes
-router.get("/", getAllCategories);
-router.get("/:id", getCategoryById);
+// Public routes (cached)
+router.get("/", cacheResponse(10 * 60 * 1000), getAllCategories); // Cache 10 phút
+router.get("/:id", cacheResponse(5 * 60 * 1000), getCategoryById); // Cache 5 phút
 
 // Protected routes (cần auth)
 router.post("/", auth, upload.single("image"), createCategory);

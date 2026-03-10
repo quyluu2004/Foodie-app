@@ -1,6 +1,3 @@
-// ⚠️ QUAN TRỌNG: File này PHẢI được import đầu tiên trong server.js
-// để đảm bảo dotenv được load trước khi import bất kỳ module nào sử dụng process.env
-
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -10,37 +7,57 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env từ thư mục gốc của project (foodie-backend/)
-// __dirname = foodie-backend/src/config
-// envPath = foodie-backend/.env
 const envPath = path.join(__dirname, '../../.env');
-console.log('🔍 Attempting to load .env from:', envPath);
-
 const result = dotenv.config({ path: envPath });
 
 if (result.error) {
-  console.warn('⚠️  Không thể load file .env từ:', envPath);
-  console.warn('   Error:', result.error.message);
-  console.warn('   Đang thử load .env từ thư mục hiện tại...');
-  const fallbackResult = dotenv.config(); // Fallback: thử load từ thư mục hiện tại
+  // Fallback: thử load từ thư mục hiện tại
+  const fallbackResult = dotenv.config();
   if (fallbackResult.error) {
-    console.error('❌ Không thể load .env từ thư mục hiện tại:', fallbackResult.error.message);
-  } else {
-    console.log('✅ Đã load .env từ thư mục hiện tại');
+    console.error('❌ Không thể load file .env');
   }
-} else {
-  console.log('✅ Đã load file .env từ:', envPath);
 }
 
-// Debug: Kiểm tra Cloudinary config
-console.log('🔍 Cloudinary Environment Variables Check:', {
-  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? `✅ ${process.env.CLOUDINARY_CLOUD_NAME}` : '❌ NOT SET',
-  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? '✅ SET' : '❌ NOT SET',
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? '✅ SET' : '❌ NOT SET',
-});
+// ==============================
+// Validate biến môi trường bắt buộc
+// ==============================
+const requiredVars = ['MONGO_URI', 'JWT_SECRET'];
+const optionalVars = ['JWT_REFRESH_SECRET', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'GEMINI_API_KEY'];
 
-// Export để các module khác có thể verify
+const missing = requiredVars.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  console.error(`❌ Thiếu biến môi trường bắt buộc: ${missing.join(', ')}`);
+  console.error('   Vui lòng tạo file .env dựa trên .env.example');
+  process.exit(1);
+}
+
+// Kiểm tra JWT_SECRET đủ mạnh (ít nhất 32 ký tự)
+if (process.env.JWT_SECRET.length < 32) {
+  console.error('❌ JWT_SECRET quá ngắn! Phải có ít nhất 32 ký tự.');
+  console.error('   Tạo bằng: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
+
+// Nếu không có JWT_REFRESH_SECRET, tự động dùng JWT_SECRET + suffix
+if (!process.env.JWT_REFRESH_SECRET) {
+  process.env.JWT_REFRESH_SECRET = process.env.JWT_SECRET + '_refresh';
+  console.warn('⚠️ JWT_REFRESH_SECRET chưa được thiết lập. Đang dùng giá trị tự sinh.');
+}
+
+// Set NODE_ENV mặc định
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
+
+// Chỉ log chi tiết trong development
+if (process.env.NODE_ENV === 'development') {
+  console.log('✅ Đã load environment config');
+  console.log('   Environment:', process.env.NODE_ENV);
+  console.log('   Cloudinary:', process.env.CLOUDINARY_CLOUD_NAME ? '✅ configured' : '⚠️ not set');
+  console.log('   Gemini AI:', process.env.GEMINI_API_KEY ? '✅ configured' : '⚠️ not set');
+}
+
 export default {
   loaded: true,
   envPath
 };
-

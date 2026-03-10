@@ -8,6 +8,7 @@ import {
   getCommentsReceived,
   getDashboardStats,
   getAnalyticsStats,
+  getCreatorStats,
 } from "../controllers/statsController.js";
 
 const router = Router();
@@ -19,6 +20,7 @@ router.get("/likes-received", auth, getLikesReceived);
 router.get("/comments-received", auth, getCommentsReceived);
 router.get("/dashboard", auth, getDashboardStats);
 router.get("/analytics", auth, getAnalyticsStats);
+router.get("/creator", auth, getCreatorStats);
 
 export default router;
 
