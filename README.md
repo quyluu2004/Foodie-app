@@ -1,6 +1,5 @@
 
-  🍳 Foodie - Recipe & Food Social Mobile App</h1>
-  A comprehensive platform for finding, sharing, and discussing food recipes, complete with real-time community engagement features and a robust administrative dashboard.</p>
+</p>
 <div align="center">
   <h1 align="center">Foodie - Social Culinary Platform</h1>
 
