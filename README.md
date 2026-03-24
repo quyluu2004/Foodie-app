@@ -8,11 +8,11 @@
     A community-driven application for users to explore diverse recipes and engage via real-time posts.
     <br />
     <br />
-    <a href="#">View Demo</a>
+    <a href="#"></a>
     ·
-    <a href="#">Report Bug</a>
+    <a href="#"></a>
     ·
-    <a href="#">Request Feature</a>
+    <a href="#"></a>
   </p>
 </div>
 
