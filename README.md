@@ -25,6 +25,8 @@
 ![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101)
 
 </div>
+🍳 Foodie - Recipe & Food Social Mobile App</h1>
+  A comprehensive platform for finding, sharing, and discussing food recipes, complete with real-time community engagement features and a robust administrative dashboard.
 
 ## 📖 Overview
 
