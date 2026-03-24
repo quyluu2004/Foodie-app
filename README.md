@@ -1,7 +1,7 @@
 
   🍳 Foodie - Recipe & Food Social Mobile App</h1>
   A comprehensive platform for finding, sharing, and discussing food recipes, complete with real-time community engagement features and a robust administrative dashboard.</p>
-![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+
 
 ## 📖 Overview
 
