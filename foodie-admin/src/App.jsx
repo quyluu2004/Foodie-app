@@ -22,6 +22,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Chat = lazy(() => import('./pages/Chat'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const CreatorRequests = lazy(() => import('./pages/CreatorRequests'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 // Loading spinner khi đang tải page
 function PageLoader() {
@@ -93,6 +94,7 @@ function App() {
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/creator-requests" element={<CreatorRequests />} />
+                            <Route path="/profile" element={<Profile />} />
                           </Routes>
                         </Suspense>
                       </main>

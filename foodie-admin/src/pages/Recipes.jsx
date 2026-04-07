@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import TableRecipes from '../components/TableRecipes';
 import api from '../utils/api';
-import { X, Plus, Upload, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, ChefHat, Clock, Users, BookOpen } from 'lucide-react';
 
 export default function Recipes() {
   const [recipes, setRecipes] = useState([]);
@@ -435,38 +435,88 @@ export default function Recipes() {
     );
   }
 
+  const totalApproved = recipes.filter(r => r.status === 'approved').length;
+  const totalPending = recipes.filter(r => r.status === 'pending').length;
+
   return (
-    <div className="p-4 lg:p-6 w-full animate__animated animate__fadeInUp page-transition">
-      <div className="mb-6 animate__animated animate__fadeInDown">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-[#FFFFFF] mb-2 header-gradient inline-block">
-              🍳 Quản lý công thức
+    <div className="p-4 lg:p-6 w-full animate__animated animate__fadeInUp page-transition space-y-6">
+
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-md shadow-orange-200 dark:shadow-orange-900/30">
+              <ChefHat className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Quản lý công thức
             </h1>
-            <p className="text-gray-600 dark:text-[#E5E5E5] mt-2">Quản lý tất cả công thức nấu ăn trong hệ thống</p>
-            {recipes.length > 0 && (
-              <div className="flex items-center gap-4 mt-3">
-                <p className="text-sm text-gray-500 dark:text-[#E5E5E5] animate__animated animate__fadeIn">
-                  Tổng: <strong className="text-primary">{recipes.length}</strong> công thức
-                </p>
-                {categories.length > 0 && (
-                  <p className="text-sm text-gray-500 dark:text-[#E5E5E5] animate__animated animate__fadeIn">
-                    Danh mục: <strong className="text-primary">{categories.length}</strong> loại
-                  </p>
-                )}
-              </div>
-            )}
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors font-semibold shadow-lg hover:shadow-xl animate__animated animate__fadeIn"
-          >
-            <Plus className="w-5 h-5" />
-            Thêm công thức
-          </button>
+          <p className="text-sm text-gray-500 dark:text-gray-400 ml-[52px]">
+            Duyệt, chỉnh sửa và quản lý toàn bộ công thức nấu ăn trong hệ thống
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-semibold shadow-md shadow-orange-200 dark:shadow-orange-900/30 hover:shadow-lg transition-all duration-200 active:scale-95 whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4" />
+          Thêm công thức
+        </button>
+      </div>
+
+      {/* ── Summary Cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#2A2A2A] rounded-2xl border border-gray-100 dark:border-[#3A3A3A] p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tổng công thức</p>
+            <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-orange-500" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{recipes.length}</p>
+          {categories.length > 0 && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{categories.length} danh mục</p>
+          )}
+        </div>
+        <div className="bg-white dark:bg-[#2A2A2A] rounded-2xl border border-gray-100 dark:border-[#3A3A3A] p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Đã duyệt</p>
+            <div className="w-8 h-8 rounded-xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+              <ChefHat className="w-4 h-4 text-green-500" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalApproved}</p>
+          {recipes.length > 0 && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{Math.round(totalApproved / recipes.length * 100)}% tổng số</p>
+          )}
+        </div>
+        <div className="bg-white dark:bg-[#2A2A2A] rounded-2xl border border-gray-100 dark:border-[#3A3A3A] p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Chờ duyệt</p>
+            <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-amber-500" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{totalPending}</p>
+          {totalPending > 0 && (
+            <p className="text-xs text-amber-500 dark:text-amber-400 mt-1 font-medium">Cần xem xét</p>
+          )}
+        </div>
+        <div className="bg-white dark:bg-[#2A2A2A] rounded-2xl border border-gray-100 dark:border-[#3A3A3A] p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Danh mục</p>
+            <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+              <Users className="w-4 h-4 text-blue-500" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{categories.length}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">loại món ăn</p>
         </div>
       </div>
-      <div className="animate__animated animate__fadeInUp animate-delay-200">
+
+      {/* ── Table ── */}
+      <div>
         <TableRecipes
           recipes={recipes}
           categories={categories}
@@ -477,128 +527,137 @@ export default function Recipes() {
         />
       </div>
 
-      {/* Modal chỉnh sửa công thức */}
+      {/* Modal chỉnh sửa công thức — luôn nền sáng, đồng bộ dashboard (cam) */}
       {showEditModal && editingRecipe && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-[#333333] rounded-lg shadow-xl dark:shadow-2xl dark:border dark:border-[#404040] max-w-4xl w-full max-h-[90vh] flex flex-col animate__animated animate__zoomIn my-auto dark:text-[#FFFFFF]">
-            {/* Header - Fixed */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-[#FFFFFF]">Chỉnh sửa công thức</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col animate__animated animate__zoomIn my-auto border border-gray-200 text-gray-900 [color-scheme:light]"
+            role="dialog"
+            aria-labelledby="edit-recipe-title"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0 bg-white rounded-t-2xl">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-md shadow-orange-200 shrink-0">
+                  <ChefHat className="w-5 h-5 text-white" />
+                </div>
+                <h2 id="edit-recipe-title" className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                  Chỉnh sửa công thức
+                </h2>
+              </div>
               <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingRecipe(null);
-                  setImagePreview(null);
-                  setImageFile(null);
-                }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                type="button"
+                onClick={() => { setShowEditModal(false); setEditingRecipe(null); setImagePreview(null); setImageFile(null); }}
+                className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors shrink-0"
+                aria-label="Đóng"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Content - Scrollable */}
-            <div className="overflow-y-auto flex-1 p-6">
-              <form onSubmit={handleSubmit} id="edit-recipe-form" className="space-y-6">
+            {/* Content — nền xám nhạt, từng khối trắng */}
+            <div className="overflow-y-auto flex-1 p-4 sm:p-6 bg-gray-50">
+              <form onSubmit={handleSubmit} id="edit-recipe-form" className="space-y-5">
                 {/* Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
                     Tên công thức <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.title?.replace(/\s+\d+$/, '').replace(/\d+$/, '') || formData.title}
                     onChange={(e) => {
-                      // Remove trailing numbers when user types
                       const cleaned = e.target.value.replace(/\s+\d+$/, '').replace(/\d+$/, '');
                       setFormData({ ...formData, title: cleaned });
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#333333] dark:text-[#FFFFFF]"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400 transition-shadow"
                     required
                   />
                 </div>
 
                 {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Mô tả</label>
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Mô tả</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none dark:bg-[#333333] dark:text-[#FFFFFF]"
-                    rows="3"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400 resize-y min-h-[100px]"
+                    rows={4}
                   />
                 </div>
 
-                {/* Category, Time, Servings, Difficulty */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Danh mục</label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#333333] dark:text-[#FFFFFF]"
-                    >
-                      <option value="">Chọn danh mục</option>
-                      {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Thời gian nấu (phút)</label>
-                    <input
-                      type="number"
-                      value={formData.cookTimeMinutes}
-                      onChange={(e) => setFormData({ ...formData, cookTimeMinutes: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#333333] dark:text-[#FFFFFF]"
-                      min="1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Số người</label>
-                    <input
-                      type="number"
-                      value={formData.servings}
-                      onChange={(e) => setFormData({ ...formData, servings: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#333333] dark:text-[#FFFFFF]"
-                      min="1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Độ khó</label>
-                    <select
-                      value={formData.difficulty}
-                      onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#333333] dark:text-[#FFFFFF]"
-                    >
-                      <option value="Dễ">Dễ</option>
-                      <option value="Trung bình">Trung bình</option>
-                      <option value="Khó">Khó</option>
-                    </select>
+                {/* Meta grid */}
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">Danh mục</label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400"
+                      >
+                        <option value="">Chọn danh mục</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">Thời gian nấu (phút)</label>
+                      <input
+                        type="number"
+                        value={formData.cookTimeMinutes}
+                        onChange={(e) => setFormData({ ...formData, cookTimeMinutes: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400"
+                        min="1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">Số người</label>
+                      <input
+                        type="number"
+                        value={formData.servings}
+                        onChange={(e) => setFormData({ ...formData, servings: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400"
+                        min="1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">Độ khó</label>
+                      <select
+                        value={formData.difficulty}
+                        onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400"
+                      >
+                        <option value="Dễ">Dễ</option>
+                        <option value="Trung bình">Trung bình</option>
+                        <option value="Khó">Khó</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 {/* Image */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Ảnh công thức</label>
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">Ảnh công thức</label>
                   {imagePreview && !deleteImage && (
-                    <div className="relative mb-3 group">
+                    <div className="relative mb-4 overflow-hidden rounded-xl border-2 border-orange-100 bg-gray-100">
                       <img
                         src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg border-2 border-gray-300 dark:border-[#404040]"
+                        alt="Ảnh công thức"
+                        className="w-full aspect-[4/3] max-h-80 object-cover"
                       />
                       <button
                         type="button"
                         onClick={() => setShowDeleteImageConfirm(true)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
+                        className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
                         title="Xóa ảnh"
                       >
                         <X className="w-5 h-5" />
                       </button>
-                      <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                      <div className="absolute bottom-3 left-3 bg-black/55 text-white text-xs font-medium px-2.5 py-1 rounded-lg backdrop-blur-sm">
                         Ảnh hiện tại
                       </div>
                     </div>
@@ -608,46 +667,51 @@ export default function Recipes() {
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-[#404040] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#333333] dark:text-[#FFFFFF]"
+                      className="w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-50 file:text-orange-800 file:font-medium hover:file:bg-orange-100 cursor-pointer"
                     />
                   )}
                   {deleteImage && (
-                    <div className="p-3 bg-yellow-50 dark:bg-[rgba(251,191,36,0.1)] border border-yellow-200 dark:border-[rgba(251,191,36,0.3)] rounded-lg mb-3">
-                      <p className="text-sm text-yellow-800 dark:text-[#FBBF24]">
-                        ⚠️ Ảnh sẽ bị xóa sau khi lưu thay đổi
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm text-amber-900 font-medium">
+                        Ảnh sẽ bị gỡ sau khi bạn nhấn &quot;Lưu thay đổi&quot;.
                       </p>
                     </div>
                   )}
                 </div>
 
                 {/* Ingredients */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Nguyên liệu</label>
-                  <div className="flex gap-2 mb-2">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">Nguyên liệu</label>
+                  <div className="flex flex-col sm:flex-row gap-2 mb-3">
                     <input
                       type="text"
                       value={ingredientInput}
                       onChange={(e) => setIngredientInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
                       placeholder="Nhập nguyên liệu và nhấn Enter"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400"
                     />
                     <button
                       type="button"
                       onClick={addIngredient}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-md shadow-orange-200 hover:from-orange-600 hover:to-amber-600 transition-all sm:self-stretch"
                     >
                       <Plus className="w-5 h-5" />
+                      Thêm
                     </button>
                   </div>
                   <ul className="space-y-2">
                     {formData.ingredients.map((ingredient, index) => (
-                      <li key={index} className="flex items-center justify-between bg-gray-50 dark:bg-[#333333] p-2 rounded">
-                        <span className="dark:text-[#FFFFFF]">{ingredient}</span>
+                      <li
+                        key={index}
+                        className="flex items-center justify-between gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100"
+                      >
+                        <span className="text-gray-800 text-sm sm:text-base leading-snug">{ingredient}</span>
                         <button
                           type="button"
                           onClick={() => removeIngredient(index)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors shrink-0"
+                          aria-label="Xóa nguyên liệu"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -657,32 +721,37 @@ export default function Recipes() {
                 </div>
 
                 {/* Steps */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-[#E5E5E5] mb-2">Các bước thực hiện</label>
-                  <div className="flex gap-2 mb-2">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">Các bước thực hiện</label>
+                  <div className="flex flex-col sm:flex-row gap-2 mb-3">
                     <textarea
                       value={stepInput}
                       onChange={(e) => setStepInput(e.target.value)}
                       placeholder="Nhập bước thực hiện"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                      rows="2"
+                      className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/35 focus:border-orange-400 resize-y min-h-[80px]"
+                      rows={2}
                     />
                     <button
                       type="button"
                       onClick={addStep}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors self-start"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-md shadow-orange-200 hover:from-orange-600 hover:to-amber-600 transition-all self-start sm:self-stretch sm:min-w-[120px]"
                     >
                       <Plus className="w-5 h-5" />
+                      Thêm bước
                     </button>
                   </div>
-                  <ol className="space-y-2 list-decimal list-inside">
+                  <ol className="space-y-2 list-decimal list-inside marker:text-orange-600 marker:font-semibold">
                     {formData.steps.map((step, index) => (
-                      <li key={index} className="flex items-start justify-between bg-gray-50 dark:bg-[#333333] p-2 rounded">
-                        <span className="flex-1 dark:text-[#FFFFFF]">{step}</span>
+                      <li
+                        key={index}
+                        className="flex items-start justify-between gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100"
+                      >
+                        <span className="flex-1 text-gray-800 text-sm sm:text-base leading-relaxed pl-1">{step}</span>
                         <button
                           type="button"
                           onClick={() => removeStep(index)}
-                          className="text-red-600 hover:text-red-800 ml-2"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors ml-1 shrink-0"
+                          aria-label="Xóa bước"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -690,30 +759,22 @@ export default function Recipes() {
                     ))}
                   </ol>
                 </div>
-
               </form>
             </div>
 
-            {/* Footer - Fixed with buttons */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-[#404040] bg-white dark:bg-[#333333] rounded-b-lg flex-shrink-0">
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-white rounded-b-2xl flex-shrink-0">
               <button
                 type="button"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingRecipe(null);
-                  setImagePreview(null);
-                  setImageFile(null);
-                  setDeleteImage(false);
-                  setShowDeleteImageConfirm(false);
-                }}
-                className="px-6 py-2.5 border border-gray-300 dark:border-[#404040] rounded-lg text-gray-700 dark:text-[#E5E5E5] hover:bg-gray-50 dark:hover:bg-[#404040] transition-colors font-medium"
+                onClick={() => { setShowEditModal(false); setEditingRecipe(null); setImagePreview(null); setImageFile(null); setDeleteImage(false); setShowDeleteImageConfirm(false); }}
+                className="px-5 py-2.5 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 form="edit-recipe-form"
-                className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
+                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-semibold text-sm shadow-md shadow-orange-200 transition-all active:scale-[0.98]"
               >
                 Lưu thay đổi
               </button>
@@ -818,32 +879,25 @@ export default function Recipes() {
 
       {/* Modal thêm công thức mới */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-[#333333] rounded-lg shadow-xl dark:shadow-2xl dark:border dark:border-[#404040] max-w-4xl w-full max-h-[90vh] flex flex-col animate__animated animate__zoomIn my-auto dark:text-[#FFFFFF]">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#2A2A2A] rounded-2xl shadow-2xl dark:border dark:border-[#3A3A3A] max-w-4xl w-full max-h-[90vh] flex flex-col animate__animated animate__zoomIn my-auto dark:text-[#FFFFFF]">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-[#FFFFFF]">Thêm công thức mới</h2>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-[#3A3A3A] flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-sm">
+                  <Plus className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Thêm công thức mới</h2>
+              </div>
               <button
                 onClick={() => {
                   setShowAddModal(false);
-                  setAddFormData({
-                    title: '',
-                    description: '',
-                    category: '',
-                    cookTimeMinutes: '',
-                    servings: '',
-                    difficulty: 'Dễ',
-                    ingredients: [],
-                    steps: [],
-                  });
-                  setAddImagePreview(null);
-                  setAddImageFile(null);
-                  setAddIngredientInput('');
-                  setAddStepInput('');
+                  setAddFormData({ title: '', description: '', category: '', cookTimeMinutes: '', servings: '', difficulty: 'Dễ', ingredients: [], steps: [] });
+                  setAddImagePreview(null); setAddImageFile(null); setAddIngredientInput(''); setAddStepInput('');
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3A3A3A] text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -1026,39 +1080,25 @@ export default function Recipes() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-[#404040] bg-white dark:bg-[#333333] rounded-b-lg flex-shrink-0">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-[#3A3A3A] bg-gray-50/50 dark:bg-[#252525] rounded-b-2xl flex-shrink-0">
               <button
                 type="button"
                 onClick={() => {
                   setShowAddModal(false);
-                  setAddFormData({
-                    title: '',
-                    description: '',
-                    category: '',
-                    cookTimeMinutes: '',
-                    servings: '',
-                    difficulty: 'Dễ',
-                    ingredients: [],
-                    steps: [],
-                  });
-                  setAddImagePreview(null);
-                  setAddImageFile(null);
-                  setAddIngredientInput('');
-                  setAddStepInput('');
+                  setAddFormData({ title: '', description: '', category: '', cookTimeMinutes: '', servings: '', difficulty: 'Dễ', ingredients: [], steps: [] });
+                  setAddImagePreview(null); setAddImageFile(null); setAddIngredientInput(''); setAddStepInput('');
                 }}
-                className="px-6 py-2.5 border border-gray-300 dark:border-[#404040] rounded-lg text-gray-700 dark:text-[#E5E5E5] hover:bg-gray-50 dark:hover:bg-[#404040] transition-colors font-medium"
+                className="px-5 py-2.5 border border-gray-200 dark:border-[#404040] rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3A3A] transition-colors font-medium text-sm"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 form="add-recipe-form"
-                className="px-6 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
+                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-semibold text-sm shadow-md shadow-orange-200 dark:shadow-orange-900/30 transition-all active:scale-95 flex items-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                </svg>
-                Lưu
+                <Plus className="w-4 h-4" />
+                Lưu công thức
               </button>
             </div>
           </div>

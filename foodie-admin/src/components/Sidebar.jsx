@@ -45,11 +45,9 @@ export default function Sidebar({ isCollapsed, onToggle }) {
   const { isDark } = useDarkMode();
 
   const handleLogout = () => {
-    if (confirm('Bạn có chắc muốn đăng xuất?')) {
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-      navigate('/login');
-    }
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    navigate('/login');
   };
 
   // Close mobile sidebar when route changes
